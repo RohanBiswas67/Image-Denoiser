@@ -83,12 +83,9 @@
     </div>
 
     <script>
-        // Update range value display
         document.getElementById('denoising_level').addEventListener('input', function(e) {
             document.getElementById('denoising_value').textContent = e.target.value;
         });
-
-        // Drag and drop handling
         const dropArea = document.getElementById('drop-area');
         const fileInput = document.getElementById('fileElem');
         const submitBtn = document.getElementById('submit-btn');
@@ -151,7 +148,7 @@
 
         <!-- In the script section, update the form submission handler -->
         
-            // Handle form submission
+           
             document.getElementById('denoise-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const submitBtn = document.getElementById('submit-btn');
@@ -170,7 +167,7 @@
                     const result = await response.text();
                     resultContainer.innerHTML = result;
                     
-                    // Force image reload by adding timestamp
+                    
                     const resultImg = resultContainer.querySelector('img');
                     if (resultImg) {
                         resultImg.src = resultImg.src + '?t=' + new Date().getTime()
