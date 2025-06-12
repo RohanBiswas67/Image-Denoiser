@@ -79,3 +79,38 @@ body{
     color:rgb(244, 139, 139);
 
 }
+
+
+#drop-area {
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+#drop-area:hover {
+    background-color: #e9ecef;
+    cursor: pointer;
+}
+
+/* Add these styles */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+.img-fluid {
+    max-height: 400px;
+    width: auto;
+    object-fit: contain;
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #0d6efd;
+}
+
+.form-range::-moz-range-thumb {
+    background: #0d6efd;
+}

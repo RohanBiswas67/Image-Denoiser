@@ -2,28 +2,187 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equip="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Denoiser</title> 
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
-<body>
-    <div class="container">
-        <form action="/upload" method="POST" enctype="multipart/form-data" class="upload-form">
-            <h1>Denoise Your Image</h1>
-            <div class="input-box">
-                <input type="file" name="file" accept="image/*" class="file-input">
-                
+<body class="bg-light">
+    <div class="container py-5">
+        <h1 class="text-center mb-4">Image Denoiser</h1>
+        
+        <div class="row">
+            <div class="col-md-6 mx-auto">
+                <form id="denoise-form" action="/upload" method="post" enctype="multipart/form-data">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div id="drop-area" class="border rounded p-4 text-center mb-3" 
+                                 style="min-height: 200px; border-style: dashed !important;">
+                                <i class='bx bx-image-add' style='font-size: 48px;'></i>
+                                <p class="mt-2">Drag & drop an image here, or click to select</p>
+                                <input type="file" id="fileElem" name="image" accept="image/*" style="display:none">
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileElem').click()">
+                                    Browse Files
+                                </button>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="algorithm" class="form-label">Denoising Algorithm:</label>
+                                <select name="algorithm" id="algorithm" class="form-select">
+                                    <option value="nlm">Non-local Means (OpenCV)</option>
+                                    <option value="bilateral">Bilateral Filter</option>
+                                    <option value="gaussian">Gaussian Blur</option>
+                                    <option value="median">Median Blur</option>
+                                    <option value="wavelet">Wavelet Denoising</option>
+                                    <option value="tv">Total Variation</option>
+                                    <option value="bm3d">BM3D (Slow but High Quality)</option>
+                                    <option value="nl_means_skimage">Non-local Means (Scikit-image)</option>
+                                    <option value="deep_cnn">Deep CNN Super-Resolution</option>
+                                    <option value="anisotropic">Anisotropic Diffusion</option>
+                                </select>
+            
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="denoising_level" class="form-label">Denoising Level (0-100):</label>
+                                <input type="range" class="form-range" name="denoising_level" 
+                                       id="denoising_level" min="0" max="100" value="10">
+                                <output for="denoising_level" id="denoising_value">10</output>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100" id="submit-btn" disabled>
+                                Denoise Image
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
-            <div class="input-box">
-                <input type="number" name="denoising_level" placeholder="Denoising Level(0-100)" class="denoising-level">
-                <i class='bx bx-filter' ></i>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Original Image</div>
+                    <div class="card-body text-center">
+                        <img id="original-preview" class="img-fluid" style="display: none; max-height: 400px;">
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="btn">
-                Upload and Denoise
-            </button>
-        </form>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Denoised Image</div>
+                    <div class="card-body text-center" id="result-container">
+                        <p class="text-muted">Denoised image will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        // Update range value display
+        document.getElementById('denoising_level').addEventListener('input', function(e) {
+            document.getElementById('denoising_value').textContent = e.target.value;
+        });
+
+        // Drag and drop handling
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('fileElem');
+        const submitBtn = document.getElementById('submit-btn');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropArea.classList.add('bg-light');
+        }
+
+        function unhighlight(e) {
+            dropArea.classList.remove('bg-light');
+        }
+
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            handleFiles(files);
+        }
+
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                previewFile(file);
+                submitBtn.disabled = false;
+            }
+        }
+
+        function previewFile(file) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = function() {
+                const img = document.getElementById('original-preview');
+                img.src = reader.result;
+                img.style.display = 'block';
+            }
+        }
+
+        <!-- In the script section, update the form submission handler -->
+        
+            // Handle form submission
+            document.getElementById('denoise-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submit-btn');
+                const resultContainer = document.getElementById('result-container');
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+                resultContainer.innerHTML = '<div class="text-center"><div class="spinner-border"></div><p>Processing image...</p></div>';
+
+                try {
+                    const formData = new FormData(this);
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.text();
+                    resultContainer.innerHTML = result;
+                    
+                    // Force image reload by adding timestamp
+                    const resultImg = resultContainer.querySelector('img');
+                    if (resultImg) {
+                        resultImg.src = resultImg.src + '?t=' + new Date().getTime()
+                    }
+                } catch (error) {
+                    resultContainer.innerHTML = '<div class="alert alert-danger">Error processing image</div>';
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Denoise Image';
+                }
+            });
+        </script>
+    </script>
 </body>
 </html>
