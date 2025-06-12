@@ -39,13 +39,8 @@ def time_limit(seconds):
     finally:
         signal.alarm(0)
 
-
-    
-
-# Function to denoise the image
 @app.route('/denoise', methods=['POST'])
 def denoise_image(img, algorithm, denoising_level=10):
-    # Example parameter defaults
     h = denoising_level
     hColor = denoising_level
     templateWindowSize = 7
@@ -81,7 +76,7 @@ def denoise_image(img, algorithm, denoising_level=10):
         sr = cv2.dnn_superres.DnnSuperResImpl_create()
         model_path = os.path.join(MODEL_FOLDER, "EDSR_x3.pb")
         if not os.path.exists(model_path):
-            return img  # Return original image if model not found
+            return img  
         sr.readModel(model_path)
         sr.setModel("edsr", 3)
         try:
@@ -92,13 +87,13 @@ def denoise_image(img, algorithm, denoising_level=10):
 
     elif algorithm == 'bm3d':
         try:
-            with time_limit(30):  # 30 seconds timeout
+            with time_limit(30): 
                 img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) / 255.0
                 denoised_rgb = bm3d_rgb(img_rgb, sigma_psd=30/255)
                 denoised = (denoised_rgb * 255).astype(np.uint8)
                 denoised = cv2.cvtColor(denoised, cv2.COLOR_RGB2BGR)
         except TimeoutException:
-            denoised = img  # Return original image if timeout
+            denoised = img  
         except Exception:
             denoised = img
 
