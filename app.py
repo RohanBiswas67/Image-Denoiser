@@ -15,15 +15,12 @@ RESULT_FOLDER = 'static/results'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULT_FOLDER'] = RESULT_FOLDER
 
-# Add after imports
 MODEL_FOLDER = '/'
 os.makedirs(MODEL_FOLDER, exist_ok=True)
 
-# Add at the start of your app.py, after imports
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(RESULT_FOLDER, exist_ok=True)
 
-# Add after imports
 import signal
 from contextlib import contextmanager
 import time
@@ -105,7 +102,6 @@ def denoise_image(img, algorithm, denoising_level=10):
         except Exception:
             denoised = img
 
-# Update the upload_image route to return proper paths
 @app.route('/upload', methods=['POST'])
 def upload_image():
     if 'image' not in request.files:
@@ -143,7 +139,6 @@ def uploaded_file(filename):
     """
     return send_from_directory(app.config['RESULT_FOLDER'], filename)
 
-# Add this route before your other routes
 @app.route('/')
 def index():
     """
